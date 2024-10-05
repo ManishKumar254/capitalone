@@ -12,7 +12,7 @@ app.post('/proxy', (req, res) => {
 
   // Debugging statement 1: Print to check if the proxy route is being hit
   console.log('Received request to proxy with targetUrl:', targetUrl);
-  
+
   fetch(targetUrl, {
     method: 'GET',
     headers: {
@@ -21,20 +21,26 @@ app.post('/proxy', (req, res) => {
     },
     credentials: 'include'  // Include cookies if needed
   })
-  .then(response => response.text())
-  .then(data => {
-    // Debugging statement 2: Print to check if fetch request was successful
-    console.log('Data fetched from target:', data);
+  .then(async response => {
+    // Debugging statement 2: Print response headers
+    console.log('Response headers:', response.headers.raw());
 
-    // Display some debug information on the webpage along with the actual data
-    res.send(`<h2>Request was successful!</h2><p>Data: ${data}</p>`);  // Send the response back
+    // Get the response headers and body
+    const headers = response.headers.raw();
+    const body = await response.text();
+
+    // Send both headers and body back to the frontend
+    res.json({
+      headers: headers,
+      body: body
+    });
   })
   .catch(error => {
     // Debugging statement: Print to check for errors
     console.error('Error fetching data:', error);
 
     // Display the error on the webpage
-    res.status(500).send(`<h2>Error fetching data</h2><p>Error: ${error.message}</p>`);  // Send the error response
+    res.status(500).json({ error: error.message });  // Send the error response as JSON
   });
 });
 
