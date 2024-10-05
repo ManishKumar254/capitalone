@@ -15,10 +15,10 @@ app.post('/proxy', (req, res) => {
   const requestOptions = {
     method: 'GET',
     headers: {
-      'Origin': 'https://chinamayjoshi.xyz?#xyz.capitalone.com',  // Fake origin
+      'Origin': 'https://chinamayjoshi.xyz',  // Fake origin
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.134 Safari/537.36',  // Mimic Chrome browser
-      'Accept-Encoding': 'gzip, deflate',  // Accept gzip and deflate encoded responses
-      'Accept': '*/*',  // Accept all content types ,  // Optionally add cookies if needed
+      'Accept': '*/*',  // Accept all content types, remove Accept-Encoding
+      'Cookie': '<insert-your-cookie-here>',  // Optionally add cookies if needed
       'Referer': 'https://coaf-prequalification.capitalone.com/',
       'Sec-Ch-Ua': '".Not/A)Brand";v="99", "Google Chrome";v="114", "Chromium";v="114"',
       'Sec-Ch-Ua-Platform': 'Windows',
@@ -39,32 +39,35 @@ app.post('/proxy', (req, res) => {
       const headers = response.headers.raw();
       console.log('Response headers:', headers);
 
-      // Handle response body as buffer to process chunked encoding or gzip
+      // Step 1: Log raw response buffer (before any decompression or conversion)
       const buffer = await response.buffer();
-    
-      // Determine if content-encoding is gzip
+      console.log('Raw response buffer:', buffer);
+
+      // Step 2: Check if response is compressed and handle decompression if necessary
       const encoding = response.headers.get('content-encoding');
       let body;
-    
+
       try {
         if (encoding === 'gzip') {
-          // Decompress Gzip response body
+          console.log('Response is gzip encoded, attempting to decompress...');
           body = zlib.gunzipSync(buffer).toString();
+          console.log('Decompressed response body (gzip):', body);
         } else if (encoding === 'deflate') {
-          // Decompress Deflate-encoded response body
+          console.log('Response is deflate encoded, attempting to decompress...');
           body = zlib.inflateSync(buffer).toString();
+          console.log('Decompressed response body (deflate):', body);
         } else {
-          // If not gzipped or deflated, convert buffer to string directly
+          console.log('Response is not compressed, using raw buffer as string...');
           body = buffer.toString();
         }
       } catch (err) {
+        // Step 3: Log detailed error if decompression fails
         console.error('Error decompressing data:', err);
         body = 'Error decompressing response';
       }
 
-      // Log and send both headers and body back to the frontend
-      console.log('Response body:', body);
-
+      // Step 4: Log and send both headers and body back to the frontend
+      console.log('Final response body:', body);
       res.json({
         status: statusCode,
         headers: headers,
@@ -72,7 +75,8 @@ app.post('/proxy', (req, res) => {
       });
     })
     .catch(error => {
-      console.error('Error fetching data:', error);
+      // Step 5: Log any error that occurs during the fetch process
+      console.error('Error fetching data from Capital One:', error);
       res.status(500).json({ error: error.message });
     });
 });
