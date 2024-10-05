@@ -28,18 +28,27 @@ app.post('/proxy', (req, res) => {
     const headers = response.headers.raw();
     console.log('Response headers:', headers);
 
-    // Handle gzip content encoding
+    // Handle response body as buffer to process chunked encoding or gzip
+    const buffer = await response.buffer();
+    
+    // Determine if content-encoding is gzip
     const encoding = response.headers.get('content-encoding');
     let body;
-
-    if (encoding === 'gzip') {
-      const buffer = await response.buffer();  // Get response body as buffer
-      body = zlib.gunzipSync(buffer).toString();  // Decompress GZIP buffer
-    } else {
-      body = await response.text();  // For non-gzipped responses
+    
+    try {
+      if (encoding === 'gzip') {
+        // Decompress Gzip response body
+        body = zlib.gunzipSync(buffer).toString();
+      } else {
+        // If not gzipped, convert buffer to string directly
+        body = buffer.toString();
+      }
+    } catch (err) {
+      console.error('Error decompressing data:', err);
+      body = 'Error decompressing response';
     }
 
-    // Log and send both headers and decompressed body back to the frontend
+    // Log and send both headers and body back to the frontend
     console.log('Response body:', body);
 
     res.json({
