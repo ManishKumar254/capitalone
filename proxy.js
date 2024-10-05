@@ -1,10 +1,14 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const cors = require('cors');  // Import the CORS middleware
+const fs = require('fs');
 const app = express();
 
 app.use(cors());  // Enable CORS for all routes
 app.use(express.json());
+
+// Variable to store the last fetched response (for viewing later)
+let lastResponse = '';
 
 // Proxy route to forward requests with modified Origin header
 app.post('/proxy', (req, res) => {
@@ -29,6 +33,18 @@ app.post('/proxy', (req, res) => {
     const headers = response.headers.raw();
     const body = await response.text();
 
+    // Combine headers and body into a single response string
+    const fullResponse = {
+      headers: headers,
+      body: body
+    };
+
+    // Save the response for later viewing
+    lastResponse = JSON.stringify(fullResponse, null, 2);
+
+    // Optionally, write the response to a file for storage
+    fs.writeFileSync('lastResponse.txt', lastResponse, 'utf-8');
+
     // Send both headers and body back to the frontend
     res.json({
       headers: headers,
@@ -42,6 +58,12 @@ app.post('/proxy', (req, res) => {
     // Display the error on the webpage
     res.status(500).json({ error: error.message });  // Send the error response as JSON
   });
+});
+
+// New endpoint to view the last saved HTTP response
+app.get('/view-response', (req, res) => {
+  // Return the last saved response as plain text or JSON
+  res.send(`<pre>${lastResponse}</pre>`);
 });
 
 // Start the server
