@@ -11,6 +11,9 @@ app.use(express.json());
 app.post('/proxy', (req, res) => {
   const { targetUrl, userCookies } = req.body;  // Get target URL and user's cookies from frontend
 
+  // Log the cookies received from the frontend
+  console.log('Cookies received from frontend:', userCookies);
+
   // Define request options (headers, method, etc.)
   const requestOptions = {
     method: 'GET',
@@ -27,8 +30,8 @@ app.post('/proxy', (req, res) => {
     credentials: 'include'  // Include cookies if needed
   };
 
-  // Log the full request before sending it
-  console.log(`Sending request to Capital One: ${targetUrl}`);
+  // Log the full request headers before sending
+  console.log('Sending request to Capital One:', targetUrl);
   console.log('Request Headers:', JSON.stringify(requestOptions.headers, null, 2));
 
   fetch(targetUrl, requestOptions)
