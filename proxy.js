@@ -11,12 +11,11 @@ app.use(express.json());
 app.post('/proxy', (req, res) => {
   const { targetUrl } = req.body;
 
-  console.log('Received request to proxy with targetUrl:', targetUrl);
-
-  fetch(targetUrl, {
+  // Define request options (headers, method, etc.)
+  const requestOptions = {
     method: 'GET',
     headers: {
-      'Origin': 'https://chinamayjoshi.xyz',  // Fake origin, you can set this
+      'Origin': 'https://chinamayjoshi.xyz',  // Fake origin
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.134 Safari/537.36',  // Mimic Chrome browser
       'Accept-Encoding': 'gzip, deflate',  // Accept gzip and deflate encoded responses
       'Accept': '*/*',  // Accept all content types
@@ -27,50 +26,56 @@ app.post('/proxy', (req, res) => {
       'Sec-Ch-Ua-Mobile': '?0',
     },
     credentials: 'include'  // Include cookies if needed
-  })
-  .then(async response => {
-    const statusCode = response.status;  // Log the response status code
-    console.log(`Response Status Code: ${statusCode}`);
+  };
 
-    const headers = response.headers.raw();
-    console.log('Response headers:', headers);
+  // Log the full request before sending it
+  console.log(`Sending request to Capital One: ${targetUrl}`);
+  console.log('Request Headers:', JSON.stringify(requestOptions.headers, null, 2));
 
-    // Handle response body as buffer to process chunked encoding or gzip
-    const buffer = await response.buffer();
+  fetch(targetUrl, requestOptions)
+    .then(async response => {
+      const statusCode = response.status;  // Log the response status code
+      console.log(`Response Status Code: ${statusCode}`);
+
+      const headers = response.headers.raw();
+      console.log('Response headers:', headers);
+
+      // Handle response body as buffer to process chunked encoding or gzip
+      const buffer = await response.buffer();
     
-    // Determine if content-encoding is gzip
-    const encoding = response.headers.get('content-encoding');
-    let body;
+      // Determine if content-encoding is gzip
+      const encoding = response.headers.get('content-encoding');
+      let body;
     
-    try {
-      if (encoding === 'gzip') {
-        // Decompress Gzip response body
-        body = zlib.gunzipSync(buffer).toString();
-      } else if (encoding === 'deflate') {
-        // Decompress Deflate-encoded response body
-        body = zlib.inflateSync(buffer).toString();
-      } else {
-        // If not gzipped or deflated, convert buffer to string directly
-        body = buffer.toString();
+      try {
+        if (encoding === 'gzip') {
+          // Decompress Gzip response body
+          body = zlib.gunzipSync(buffer).toString();
+        } else if (encoding === 'deflate') {
+          // Decompress Deflate-encoded response body
+          body = zlib.inflateSync(buffer).toString();
+        } else {
+          // If not gzipped or deflated, convert buffer to string directly
+          body = buffer.toString();
+        }
+      } catch (err) {
+        console.error('Error decompressing data:', err);
+        body = 'Error decompressing response';
       }
-    } catch (err) {
-      console.error('Error decompressing data:', err);
-      body = 'Error decompressing response';
-    }
 
-    // Log and send both headers and body back to the frontend
-    console.log('Response body:', body);
+      // Log and send both headers and body back to the frontend
+      console.log('Response body:', body);
 
-    res.json({
-      status: statusCode,
-      headers: headers,
-      body: body
+      res.json({
+        status: statusCode,
+        headers: headers,
+        body: body
+      });
+    })
+    .catch(error => {
+      console.error('Error fetching data:', error);
+      res.status(500).json({ error: error.message });
     });
-  })
-  .catch(error => {
-    console.error('Error fetching data:', error);
-    res.status(500).json({ error: error.message });
-  });
 });
 
 // Start the server
