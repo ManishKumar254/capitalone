@@ -15,11 +15,10 @@ app.post('/proxy', (req, res) => {
   const requestOptions = {
     method: 'GET',
     headers: {
-      'Origin': 'https://chinamayjoshi.xyz',  // Fake origin
+      'Origin': 'https://chinamayjoshi.xyz?#xyz.capitalone.com',  // Fake origin
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.134 Safari/537.36',  // Mimic Chrome browser
       'Accept-Encoding': 'gzip, deflate',  // Accept gzip and deflate encoded responses
-      'Accept': '*/*',  // Accept all content types
-      'Cookie': '<insert-your-cookie-here>',  // Optionally add cookies if needed
+      'Accept': '*/*',  // Accept all content types ,  // Optionally add cookies if needed
       'Referer': 'https://coaf-prequalification.capitalone.com/',
       'Sec-Ch-Ua': '".Not/A)Brand";v="99", "Google Chrome";v="114", "Chromium";v="114"',
       'Sec-Ch-Ua-Platform': 'Windows',
