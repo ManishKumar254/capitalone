@@ -2,8 +2,9 @@
   "name": "cors-proxy",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "proxy.js",  // Make sure this matches your entry file
   "scripts": {
+    "start": "node proxy.js",  // Add the start script
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
