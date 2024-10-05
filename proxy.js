@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());  // Enable CORS for all routes
 app.use(express.json());
 
-// Proxy route to forward requests with modified Origin header
+// Proxy route to forward requests with modified Origin header and browser-like headers
 app.post('/proxy', (req, res) => {
   const { targetUrl } = req.body;
 
@@ -16,8 +16,15 @@ app.post('/proxy', (req, res) => {
   fetch(targetUrl, {
     method: 'GET',
     headers: {
-      'Origin': 'https://chinamayjoshi.xyz?xyz.capitalone.com',  // Fake origin
-      'Content-Type': 'application/json'
+      'Origin': 'https://chinamayjoshi.xyz',  // Fake origin, you can set this
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.134 Safari/537.36',  // Mimic Chrome browser
+      'Accept-Encoding': 'gzip, deflate',  // Accept gzip and deflate encoded responses
+      'Accept': '*/*',  // Accept all content types
+      'Cookie': '<insert-your-cookie-here>',  // Optionally add cookies if needed
+      'Referer': 'https://coaf-prequalification.capitalone.com/',
+      'Sec-Ch-Ua': '".Not/A)Brand";v="99", "Google Chrome";v="114", "Chromium";v="114"',
+      'Sec-Ch-Ua-Platform': 'Windows',
+      'Sec-Ch-Ua-Mobile': '?0',
     },
     credentials: 'include'  // Include cookies if needed
   })
@@ -39,8 +46,11 @@ app.post('/proxy', (req, res) => {
       if (encoding === 'gzip') {
         // Decompress Gzip response body
         body = zlib.gunzipSync(buffer).toString();
+      } else if (encoding === 'deflate') {
+        // Decompress Deflate-encoded response body
+        body = zlib.inflateSync(buffer).toString();
       } else {
-        // If not gzipped, convert buffer to string directly
+        // If not gzipped or deflated, convert buffer to string directly
         body = buffer.toString();
       }
     } catch (err) {
