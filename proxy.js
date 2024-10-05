@@ -1,20 +1,16 @@
 const express = require('express');
 const fetch = require('node-fetch');
+const zlib = require('zlib');  // Import zlib for gzip decompression
 const cors = require('cors');  // Import the CORS middleware
-const fs = require('fs');
 const app = express();
 
 app.use(cors());  // Enable CORS for all routes
 app.use(express.json());
 
-// Variable to store the last fetched response (for viewing later)
-let lastResponse = '';
-
 // Proxy route to forward requests with modified Origin header
 app.post('/proxy', (req, res) => {
   const { targetUrl } = req.body;
 
-  // Debugging statement 1: Print to check if the proxy route is being hit
   console.log('Received request to proxy with targetUrl:', targetUrl);
 
   fetch(targetUrl, {
@@ -26,44 +22,36 @@ app.post('/proxy', (req, res) => {
     credentials: 'include'  // Include cookies if needed
   })
   .then(async response => {
-    // Debugging statement 2: Print response headers
-    console.log('Response headers:', response.headers.raw());
+    const statusCode = response.status;  // Log the response status code
+    console.log(`Response Status Code: ${statusCode}`);
 
-    // Get the response headers and body
     const headers = response.headers.raw();
-    const body = await response.text();
+    console.log('Response headers:', headers);
 
-    // Combine headers and body into a single response string
-    const fullResponse = {
-      headers: headers,
-      body: body
-    };
+    // Handle gzip content encoding
+    const encoding = response.headers.get('content-encoding');
+    let body;
 
-    // Save the response for later viewing
-    lastResponse = JSON.stringify(fullResponse, null, 2);
+    if (encoding === 'gzip') {
+      const buffer = await response.buffer();  // Get response body as buffer
+      body = zlib.gunzipSync(buffer).toString();  // Decompress GZIP buffer
+    } else {
+      body = await response.text();  // For non-gzipped responses
+    }
 
-    // Optionally, write the response to a file for storage
-    fs.writeFileSync('lastResponse.txt', lastResponse, 'utf-8');
+    // Log and send both headers and decompressed body back to the frontend
+    console.log('Response body:', body);
 
-    // Send both headers and body back to the frontend
     res.json({
+      status: statusCode,
       headers: headers,
       body: body
     });
   })
   .catch(error => {
-    // Debugging statement: Print to check for errors
     console.error('Error fetching data:', error);
-
-    // Display the error on the webpage
-    res.status(500).json({ error: error.message });  // Send the error response as JSON
+    res.status(500).json({ error: error.message });
   });
-});
-
-// New endpoint to view the last saved HTTP response
-app.get('/view-response', (req, res) => {
-  // Return the last saved response as plain text or JSON
-  res.send(`<pre>${lastResponse}</pre>`);
 });
 
 // Start the server
