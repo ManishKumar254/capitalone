@@ -1,7 +1,9 @@
 const express = require('express');
 const fetch = require('node-fetch');
+const cors = require('cors');  // Import the CORS middleware
 const app = express();
 
+app.use(cors());  // Enable CORS for all routes
 app.use(express.json());
 
 // Proxy route to forward requests with modified Origin header
